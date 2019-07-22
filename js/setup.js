@@ -67,6 +67,8 @@ var inputCoatColor = document.querySelector('input[name="coat-color"]');
 var inputEyesColor = document.querySelector('input[name="eyes-color"]');
 var inputFireballColor = document.querySelector('input[name="fireball-color"]');
 
+var dialogHandler = setup.querySelector('.upload');
+
 var getRandomElement = function (array) {
   return array[Math.floor(Math.random() * array.length)];
 };
@@ -120,6 +122,8 @@ var onPopupEscPress = function (evt) { // закрытие поп-ап при н
 var closePopup = function () { // функция закрытия
   setup.classList.add('hidden');
   document.removeEventListener('keydown', onPopupEscPress);
+  setup.style.top = '';
+  setup.style.left = '';
 };
 
 setupOpen.addEventListener('click', function () { // открытие окна
@@ -178,3 +182,65 @@ wizardFireball.addEventListener('click', onWizardFireballClick);
 insertWizardTemplate(getSimilarWizards(WIZARD_NUMBER));
 
 document.querySelector('.setup-similar').classList.remove('hidden');
+
+// перемещение окна
+
+var startCoords = {
+  x: 0,
+  y: 0
+};
+
+var dragged;
+
+// функция при нажатии на кнопку мыши
+var onMouseDown = function (evtDown) {
+  evtDown.preventDefault();
+  dragged = false;
+  startCoords = {
+    x: evtDown.clientX,
+    y: evtDown.clientY
+  };
+  return startCoords;
+};
+
+// функция при перемещении мыши
+var onMouseMove = function (evtMove) {
+  evtMove.preventDefault();
+  dragged = true;
+
+  var shift = {
+    x: startCoords.x - evtMove.clientX,
+    y: startCoords.y - evtMove.clientY
+  };
+
+  startCoords = {
+    x: evtMove.clientX,
+    y: evtMove.clientY
+  };
+
+  setup.style.top = (setup.offsetTop - shift.y) + 'px';
+  setup.style.left = (setup.offsetLeft - shift.x) + 'px';
+};
+
+// функция при отпускании кнопки мыши
+var onMouseUp = function (evtUp) {
+  evtUp.preventDefault();
+
+  document.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseup', onMouseUp);
+
+  if (dragged) {
+    var onClickPreventDefault = function (evtOn) {
+      evtOn.preventDefault();
+      dialogHandler.removeEventListener('click', onClickPreventDefault);
+    };
+    dialogHandler.addEventListener('click', onClickPreventDefault);
+  }
+};
+
+dialogHandler.addEventListener('mousedown', function (evtDown) {
+  evtDown.preventDefault();
+  onMouseDown(evtDown);
+  document.addEventListener('mousemove', onMouseMove);
+  document.addEventListener('mouseup', onMouseUp);
+});
