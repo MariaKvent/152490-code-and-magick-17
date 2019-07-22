@@ -122,6 +122,8 @@ var onPopupEscPress = function (evt) { // закрытие поп-ап при н
 var closePopup = function () { // функция закрытия
   setup.classList.add('hidden');
   document.removeEventListener('keydown', onPopupEscPress);
+  setup.style.top = '';
+  setup.style.left = '';
 };
 
 setupOpen.addEventListener('click', function () { // открытие окна
@@ -181,50 +183,64 @@ insertWizardTemplate(getSimilarWizards(WIZARD_NUMBER));
 
 document.querySelector('.setup-similar').classList.remove('hidden');
 
-// функция перемещения окна
-dialogHandler.addEventListener('mousedown', function (evt) {
-  evt.preventDefault();
+// перемещение окна
 
-  var startCoords = {
-    x: evt.clientX,
-    y: evt.clientY
+var startCoords = {
+  x: 0,
+  y: 0
+};
+
+var dragged;
+
+// функция при нажатии на кнопку мыши
+var onMouseDown = function (evtDown) {
+  evtDown.preventDefault();
+  dragged = false;
+  startCoords = {
+    x: evtDown.clientX,
+    y: evtDown.clientY
+  };
+  return startCoords;
+};
+
+// функция при перемещении мыши
+var onMouseMove = function (evtMove) {
+  evtMove.preventDefault();
+  dragged = true;
+
+  var shift = {
+    x: startCoords.x - evtMove.clientX,
+    y: startCoords.y - evtMove.clientY
   };
 
-  var dragged = false;
+  startCoords = {
+    x: evtMove.clientX,
+    y: evtMove.clientY
+  };
 
-  var onMouseMove = function (moveEvt) {
-    moveEvt.preventDefault();
-    dragged = true;
+  setup.style.top = (setup.offsetTop - shift.y) + 'px';
+  setup.style.left = (setup.offsetLeft - shift.x) + 'px';
+};
 
-    var shift = {
-      x: startCoords.x - moveEvt.clientX,
-      y: startCoords.y - moveEvt.clientY
+// функция при отпускании кнопки мыши
+var onMouseUp = function (evtUp) {
+  evtUp.preventDefault();
+
+  document.removeEventListener('mousemove', onMouseMove);
+  document.removeEventListener('mouseup', onMouseUp);
+
+  if (dragged) {
+    var onClickPreventDefault = function (evtOn) {
+      evtOn.preventDefault();
+      dialogHandler.removeEventListener('click', onClickPreventDefault);
     };
+    dialogHandler.addEventListener('click', onClickPreventDefault);
+  }
+};
 
-    startCoords = {
-      x: moveEvt.clientX,
-      y: moveEvt.clientY
-    };
-
-    setup.style.top = (setup.offsetTop - shift.y) + 'px';
-    setup.style.left = (setup.offsetLeft - shift.x) + 'px';
-  };
-
-  var onMouseUp = function (upEvt) {
-    upEvt.preventDefault();
-
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-
-    if (dragged) {
-      var onClickPreventDefault = function (onEvt) {
-        onEvt.preventDefault();
-        dialogHandler.removeEventListener('click', onClickPreventDefault);
-      };
-      dialogHandler.addEventListener('click', onClickPreventDefault);
-    }
-  };
-
+dialogHandler.addEventListener('mousedown', function (evtDown) {
+  evtDown.preventDefault();
+  onMouseDown(evtDown);
   document.addEventListener('mousemove', onMouseMove);
   document.addEventListener('mouseup', onMouseUp);
 });
